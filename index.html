@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Black Hole Simulation - Enhanced</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="info">
+        <div id="hint-text">
+            🌌 Drag to orbit • Scroll to zoom • Watch light bend around the black hole
+        </div>
+    </div>
+    
+    <div class="fps-counter">
+        FPS: <span class="fps-value" id="fps-display">60</span>
+    </div>
+    
+    <div class="controls">
+        <div class="control-group">
+            <label>
+                <input type="checkbox" id="accretion_disk" checked> Accretion Disk
+            </label>
+        </div>
+        
+        <div class="control-group">
+            <label>
+                <input type="checkbox" id="gravitational_lensing" checked> Gravitational Lensing
+            </label>
+        </div>
+        
+        <div class="control-group">
+            <label>
+                <input type="checkbox" id="doppler_beaming" checked> Doppler Effect
+            </label>
+        </div>
+        
+        <div class="control-group">
+            <label>Observer Distance: <span class="value-display" id="distance_value">12.0</span></label>
+            <input type="range" id="observer_distance" min="3.0" max="25.0" step="0.1" value="12.0">
+        </div>
+        
+        <div class="control-group">
+            <label>Black Hole Mass: <span class="value-display" id="mass_value">1.0</span></label>
+            <input type="range" id="black_hole_mass" min="0.5" max="3.0" step="0.1" value="1.0">
+        </div>
+        
+        <div class="control-group">
+            <label>Time Scale: <span class="value-display" id="time_value">1.0</span></label>
+            <input type="range" id="time_scale" min="0.0" max="3.0" step="0.1" value="1.0">
+        </div>
+        
+        <div class="control-group">
+            <label>Quality: 
+                <select id="quality">
+                    <option value="40">Fast</option>
+                    <option value="80" selected>Medium</option>
+                    <option value="120">High</option>
+                    <option value="160">Ultra</option>
+                </select>
+            </label>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script src="app.js"></script>
+</body>
+</html>
