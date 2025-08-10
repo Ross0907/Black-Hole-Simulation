@@ -1,3 +1,60 @@
+// Starfield animation for welcome screen
+function starfield() {
+    const canvas = document.getElementById('starfield-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+    const stars = [];
+    for (let i = 0; i < 180; i++) {
+        stars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            r: Math.random() * 1.2 + 0.5,
+            speed: Math.random() * 0.15 + 0.05,
+            alpha: Math.random() * 0.5 + 0.5
+        });
+    }
+    function animateStars() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let s of stars) {
+            ctx.save();
+            ctx.globalAlpha = s.alpha;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.r, 0, 2 * Math.PI);
+            ctx.fillStyle = '#fff';
+            ctx.shadowColor = '#b3e0ff';
+            ctx.shadowBlur = 12;
+            ctx.fill();
+            ctx.restore();
+            s.y += s.speed;
+            if (s.y > canvas.height) {
+                s.y = 0;
+                s.x = Math.random() * canvas.width;
+            }
+        }
+        requestAnimationFrame(animateStars);
+    }
+    animateStars();
+}
+window.addEventListener('DOMContentLoaded', starfield);
+
+// Smooth fade-out for welcome overlay on Arrow Up
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowUp') {
+        var overlay = document.getElementById('welcome-overlay');
+        if (overlay && overlay.style.opacity !== '0') {
+            overlay.style.opacity = '0';
+            setTimeout(function() {
+                overlay.style.display = 'none';
+            }, 850);
+        }
+    }
+});
         let scene, camera, renderer, material, mesh;
         let mouseX = 0, mouseY = 0;
         let isMouseDown = false;
