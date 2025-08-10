@@ -1,5 +1,5 @@
 # Black-Hole-Simulation
-
+-- by Ross and Kenshi
 A real-time interactive black hole simulation built with Three.js and WebGL shaders, featuring accurate gravitational physics, ray tracing, and stunning cosmic visuals.
 
 ## Features
