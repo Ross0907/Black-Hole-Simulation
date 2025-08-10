@@ -26,7 +26,7 @@ A real-time interactive black hole simulation built with Three.js and WebGL shad
 
 This simulation is heavily inspired by the excellent physics explanations from **ScienceClic English**:
 
-**Primary Reference Video**: [What Would We See While Falling Into A Black Hole?](https://youtu.be/8-B6ryuBkCM?si=lU-xfqlKhvhvAgpU)
+**Primary Reference Video**: [Simulating Black Holes in C++ by kavan](https://youtu.be/8-B6ryuBkCM?si=lU-xfqlKhvhvAgpU)
 
 ### Physics Concepts Implemented
 
@@ -160,7 +160,7 @@ Contributions are welcome! Areas for improvement:
 
 ## Credits
 
-**Physics Inspiration**: [ScienceClic English](https://youtu.be/8-B6ryuBkCM?si=lU-xfqlKhvhvAgpU)
+**Physics Inspiration**: [kavan]([https://youtu.be/8-B6ryuBkCM?si=lU-xfqlKhvhvAgpU](https://www.youtube.com/@kevkev-70))
 
 **Technical Stack**:
 - [Three.js](https://threejs.org/) - 3D Graphics Library
