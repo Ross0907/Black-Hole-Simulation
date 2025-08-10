@@ -68,7 +68,7 @@ document.addEventListener('keydown', function(e) {
         function loadDefaultTextures() {
             // Load background.jpg
             const bgImg = new Image();
-            bgImg.src = 'background.jpg';
+            bgImg.src = 'assets/background.jpg';
             bgImg.onload = () => {
                 const canvas = document.createElement('canvas');
                 canvas.width = bgImg.width;
@@ -87,7 +87,7 @@ document.addEventListener('keydown', function(e) {
 
             // Load stars.jpg
             const starsImg = new Image();
-            starsImg.src = 'stars.jpg';
+            starsImg.src = 'assets/stars.jpg';
             starsImg.onload = () => {
                 const canvas = document.createElement('canvas');
                 canvas.width = starsImg.width;
