@@ -1,16 +1,77 @@
-let scene, camera, renderer, material, mesh;
+        let scene, camera, renderer, material, mesh;
         let mouseX = 0, mouseY = 0;
         let isMouseDown = false;
         let cameraDistance = 12.0;
         let cameraTheta = 0;
         let cameraPhi = Math.PI * 0.4;
         let time = 0;
+        let backgroundTexture, starsTexture;
         
-        // FPS counter variables
-        let lastTime = performance.now();
-        let frameCount = 0;
-        let fps = 60;
-        let fpsUpdateTime = 0;
+        // File input handlers for loading custom images
+        function setupFileInputs() {
+            const backgroundInput = document.getElementById('background_input');
+            const starsInput = document.getElementById('stars_input');
+            
+            backgroundInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0);
+                            
+                            backgroundTexture = new THREE.CanvasTexture(canvas);
+                            backgroundTexture.wrapS = THREE.RepeatWrapping;
+                            backgroundTexture.wrapT = THREE.RepeatWrapping;
+                            
+                            if (material) {
+                                material.uniforms.u_background_texture.value = backgroundTexture;
+                                material.uniforms.u_has_background.value = true;
+                            }
+                            
+                            console.log('Background texture loaded');
+                        };
+                        img.src = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            starsInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0);
+                            
+                            starsTexture = new THREE.CanvasTexture(canvas);
+                            starsTexture.wrapS = THREE.RepeatWrapping;
+                            starsTexture.wrapT = THREE.RepeatWrapping;
+                            
+                            if (material) {
+                                material.uniforms.u_stars_texture.value = starsTexture;
+                                material.uniforms.u_has_stars.value = true;
+                            }
+                            
+                            console.log('Stars texture loaded');
+                        };
+                        img.src = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
         
         // Vertex shader
         const vertexShader = `
@@ -19,7 +80,7 @@ let scene, camera, renderer, material, mesh;
             }
         `;
         
-        // Enhanced fragment shader with rich space background
+        // Enhanced fragment shader with external texture support
         const fragmentShader = `
             precision highp float;
             
@@ -32,41 +93,31 @@ let scene, camera, renderer, material, mesh;
             uniform bool u_doppler_beaming;
             uniform float u_black_hole_mass;
             uniform int u_steps;
+            uniform sampler2D u_background_texture;
+            uniform sampler2D u_stars_texture;
+            uniform bool u_has_background;
+            uniform bool u_has_stars;
+            uniform float u_disk_brightness;
             
             const float PI = 3.14159265359;
             const float TWO_PI = 6.28318530718;
             const float SCHWARZSCHILD_RADIUS = 2.0;
-            const float ACCRETION_INNER = 3.0;
-            const float ACCRETION_OUTER = 12.0;
+            const float ACCRETION_INNER = 2.8;
+            const float ACCRETION_OUTER = 20.0;
             const int MAX_STEPS = 200;
             
-            // Hash functions for procedural generation
+            // Hash function for procedural generation (fallback)
             float hash(vec2 p) {
                 return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
             }
             
-            float hash3(vec3 p) {
-                return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453);
-            }
-            
-            // Multi-octave noise
+            // Noise function (fallback)
             float noise(vec2 p) {
                 vec2 i = floor(p);
                 vec2 f = fract(p);
                 f = f * f * (3.0 - 2.0 * f);
                 return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
                           mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
-            }
-            
-            float fbm(vec2 p) {
-                float value = 0.0;
-                float amplitude = 0.5;
-                for(int i = 0; i < 6; i++) {
-                    value += amplitude * noise(p);
-                    p *= 2.0;
-                    amplitude *= 0.5;
-                }
-                return value;
             }
             
             // Convert 3D direction to spherical coordinates
@@ -77,238 +128,205 @@ let scene, camera, renderer, material, mesh;
                 );
             }
             
-            // Enhanced cosmic background
-            vec3 getCosmicBackground(vec2 uv, vec3 rayDir) {
+            // Enhanced background sampling with external textures
+            vec3 getBackground(vec2 uv) {
                 vec3 color = vec3(0.0);
                 
-                // Deep space base color gradient
-                float cosmicGradient = length(uv - 0.5);
-                color += vec3(0.02, 0.03, 0.08) * (1.0 - cosmicGradient * 0.5);
-                
-                // Distant galaxy clusters
-                for(int i = 0; i < 15; i++) {
-                    float fi = float(i);
-                    vec2 galaxyPos = vec2(
-                        hash(vec2(fi * 23.45, fi * 67.89)),
-                        hash(vec2(fi * 89.12, fi * 34.56))
-                    );
-                    
-                    float dist = distance(uv, galaxyPos);
-                    float galaxySize = 0.03 + hash(vec2(fi * 12.34)) * 0.04;
-                    
-                    if(dist < galaxySize) {
-                        float intensity = (galaxySize - dist) / galaxySize;
-                        intensity = pow(intensity, 1.5);
-                        
-                        // Galaxy spiral structure
-                        vec2 relPos = (uv - galaxyPos) / galaxySize;
-                        float angle = atan(relPos.y, relPos.x);
-                        float spiral = sin(angle * 3.0 + length(relPos) * 20.0) * 0.5 + 0.5;
-                        intensity *= 0.3 + 0.7 * spiral;
-                        
-                        vec3 galaxyColor = mix(
-                            vec3(0.8, 0.6, 1.0), // Blue core
-                            vec3(1.0, 0.8, 0.4), // Yellow arms
-                            spiral
-                        );
-                        
-                        color += galaxyColor * intensity * 0.1;
-                    }
+                // Use external background texture if available
+                if(u_has_background) {
+                    color += texture2D(u_background_texture, uv).rgb * 0.8;
                 }
                 
-                // Bright stars with different types
-                for(int i = 0; i < 200; i++) {
-                    float fi = float(i);
-                    vec2 starPos = vec2(
-                        hash(vec2(fi * 12.34, fi * 56.78)),
-                        hash(vec2(fi * 91.23, fi * 45.67))
-                    );
+                // Add external stars texture if available with proper sampling
+                if(u_has_stars) {
+                    // Sample stars at original resolution
+                    vec3 starsColor = texture2D(u_stars_texture, uv).rgb;
                     
-                    float dist = distance(uv, starPos);
-                    float brightness = hash(vec2(fi * 13.37, fi * 73.19));
-                    float starSize = 0.001 + brightness * 0.003;
+                    // Convert to luminance and create proper star points
+                    float starLuminance = dot(starsColor, vec3(0.299, 0.587, 0.114));
                     
-                    if(dist < starSize && brightness > 0.3) {
-                        float intensity = (starSize - dist) / starSize;
-                        intensity = pow(intensity, 0.3);
-                        
-                        // Star color based on type
+                    // Threshold for star detection
+                    if(starLuminance > 0.1) {
+                        // Enhance star brightness and add color variation
                         vec3 starColor = vec3(1.0);
-                        float colorSeed = hash(vec2(fi * 19.73, fi * 41.29));
                         
-                        if(colorSeed > 0.9) {
-                            starColor = vec3(0.5, 0.7, 1.5); // Blue giant
-                        } else if(colorSeed > 0.7) {
-                            starColor = vec3(1.5, 1.3, 1.0); // White dwarf
-                        } else if(colorSeed > 0.4) {
-                            starColor = vec3(1.2, 1.0, 0.6); // Yellow star
+                        // Add star color variation based on original texture
+                        if(starsColor.r > starsColor.g && starsColor.r > starsColor.b) {
+                            starColor = vec3(1.2, 0.8, 0.6); // Reddish stars
+                        } else if(starsColor.b > starsColor.r && starsColor.b > starsColor.g) {
+                            starColor = vec3(0.8, 0.9, 1.4); // Bluish stars
                         } else {
-                            starColor = vec3(1.5, 0.6, 0.3); // Red giant
+                            starColor = vec3(1.1, 1.1, 0.9); // White/yellow stars
                         }
                         
-                        // Twinkling effect
-                        float twinkle = 0.8 + 0.2 * sin(u_time * 3.0 + fi * 10.0);
+                        // Scale star intensity
+                        float starIntensity = pow(starLuminance, 0.5) * 3.0;
+                        color += starColor * starIntensity;
+                    }
+                    
+                    // Add some additional stars at different scales for depth
+                    vec3 smallStars = texture2D(u_stars_texture, uv * 1.5).rgb;
+                    float smallStarLum = dot(smallStars, vec3(0.299, 0.587, 0.114));
+                    if(smallStarLum > 0.15) {
+                        color += vec3(smallStarLum * 1.5);
+                    }
+                }
+                
+                // Fallback procedural starfield if no textures
+                if(!u_has_background && !u_has_stars) {
+                    // Large bright stars
+                    for(int i = 0; i < 100; i++) {
+                        float fi = float(i);
+                        vec2 starPos = vec2(
+                            hash(vec2(fi * 12.34, fi * 56.78)),
+                            hash(vec2(fi * 91.23, fi * 45.67))
+                        );
                         
-                        color += starColor * intensity * brightness * 3.0 * twinkle;
+                        float dist = distance(uv, starPos);
+                        float brightness = hash(vec2(fi * 13.37, fi * 73.19));
+                        
+                        if(dist < 0.004 && brightness > 0.7) {
+                            float intensity = (0.004 - dist) / 0.004;
+                            intensity = pow(intensity, 0.5);
+                            
+                            vec3 starColor = vec3(1.0);
+                            if(brightness > 0.95) starColor = vec3(0.6, 0.8, 1.2);
+                            else if(brightness > 0.85) starColor = vec3(1.2, 1.1, 0.8);
+                            else starColor = vec3(1.2, 0.8, 0.4);
+                            
+                            color += starColor * intensity * 2.0;
+                        }
                     }
-                }
-                
-                // Dense star field
-                vec2 starGrid = uv * 400.0;
-                vec2 starCell = floor(starGrid);
-                vec2 starLocal = fract(starGrid);
-                
-                float starChance = hash(starCell);
-                if(starChance > 0.85) {
-                    vec2 starCenter = vec2(hash(starCell + 0.1), hash(starCell + 0.2));
-                    float dist = distance(starLocal, starCenter);
-                    if(dist < 0.15) {
-                        float intensity = (0.15 - dist) / 0.15;
-                        intensity = pow(intensity, 2.0);
-                        color += vec3(intensity * 0.3);
-                    }
-                }
-                
-                // Milky Way galaxy band with structure
-                float galaxyBand = abs(uv.y - 0.5);
-                if(galaxyBand < 0.25) {
-                    float intensity = (0.25 - galaxyBand) / 0.25;
-                    intensity = pow(intensity, 1.2);
                     
-                    // Complex galaxy structure
-                    float galaxyNoise1 = fbm(uv * 30.0 + vec2(u_time * 0.01, 0.0));
-                    float galaxyNoise2 = fbm(uv * 80.0);
-                    float galaxyStructure = galaxyNoise1 * 0.7 + galaxyNoise2 * 0.3;
-                    
-                    intensity *= 0.2 + 0.8 * galaxyStructure;
-                    
-                    // Galaxy dust lanes
-                    float dustLanes = sin(uv.x * PI * 8.0 + galaxyNoise1 * 2.0) * 0.5 + 0.5;
-                    intensity *= 0.6 + 0.4 * dustLanes;
-                    
-                    // Galaxy colors with dust absorption
-                    vec3 galaxyCore = vec3(0.4, 0.3, 0.2); // Brown dust
-                    vec3 galaxyArms = vec3(0.2, 0.15, 0.3); // Blue-purple stars
-                    vec3 galaxyColor = mix(galaxyCore, galaxyArms, galaxyStructure);
-                    
-                    color += galaxyColor * intensity;
-                }
-                
-                // Colorful nebulae
-                float nebula1 = fbm(uv * 8.0 + vec2(u_time * 0.005, u_time * 0.003));
-                if(nebula1 > 0.65) {
-                    float nebulaIntensity = (nebula1 - 0.65) * 2.5;
-                    vec3 nebulaColor = mix(
-                        vec3(0.8, 0.1, 0.4), // Magenta
-                        vec3(0.2, 0.4, 0.8), // Blue
-                        noise(uv * 12.0)
-                    );
-                    color += nebulaColor * nebulaIntensity * 0.15;
-                }
-                
-                // Green emission nebula
-                float nebula2 = fbm(uv * 15.0 + vec2(-u_time * 0.002, u_time * 0.007));
-                if(nebula2 > 0.7) {
-                    float nebulaIntensity = (nebula2 - 0.7) * 3.0;
-                    vec3 nebulaColor = vec3(0.1, 0.6, 0.2); // Green emission
-                    color += nebulaColor * nebulaIntensity * 0.1;
-                }
-                
-                // Orange/red emission regions
-                float nebula3 = fbm(uv * 20.0 + vec2(u_time * 0.008, -u_time * 0.004));
-                if(nebula3 > 0.72) {
-                    float nebulaIntensity = (nebula3 - 0.72) * 3.5;
-                    vec3 nebulaColor = vec3(0.9, 0.4, 0.1); // Orange-red
-                    color += nebulaColor * nebulaIntensity * 0.08;
-                }
-                
-                // Cosmic dust with parallax
-                float dustPattern = fbm(uv * 100.0 + rayDir.xy * 0.1);
-                if(dustPattern > 0.6) {
-                    float dustDensity = (dustPattern - 0.6) * 2.5;
-                    vec3 dustColor = vec3(0.1, 0.08, 0.05); // Dark brown dust
-                    color *= (1.0 - dustDensity * 0.3); // Absorption
-                    color += dustColor * dustDensity * 0.05; // Scattering
-                }
-                
-                // Distant quasar
-                vec2 quasarPos = vec2(0.8, 0.3);
-                float quasarDist = distance(uv, quasarPos);
-                if(quasarDist < 0.02) {
-                    float intensity = (0.02 - quasarDist) / 0.02;
-                    intensity = pow(intensity, 0.1);
-                    vec3 quasarColor = vec3(1.2, 0.9, 1.5);
-                    float flicker = 0.8 + 0.2 * sin(u_time * 5.0);
-                    color += quasarColor * intensity * 0.5 * flicker;
-                    
-                    // Quasar jet
-                    vec2 jetDir = normalize(vec2(0.3, 0.8));
-                    float jetDistance = abs(dot(uv - quasarPos, vec2(-jetDir.y, jetDir.x)));
-                    float jetLength = dot(uv - quasarPos, jetDir);
-                    if(jetDistance < 0.005 && jetLength > 0.0 && jetLength < 0.1) {
-                        float jetIntensity = (0.005 - jetDistance) / 0.005;
-                        jetIntensity *= (0.1 - jetLength) / 0.1;
-                        color += vec3(0.4, 0.6, 1.0) * jetIntensity * 0.3;
+                    // Milky Way galaxy band
+                    float galaxyBand = abs(uv.y - 0.5);
+                    if(galaxyBand < 0.15) {
+                        float intensity = (0.15 - galaxyBand) / 0.15;
+                        intensity = pow(intensity, 1.5);
+                        
+                        float galaxyNoise = noise(uv * 50.0);
+                        intensity *= 0.3 + 0.7 * galaxyNoise;
+                        
+                        vec3 galaxyColor = mix(
+                            vec3(0.1, 0.05, 0.2),
+                            vec3(0.3, 0.2, 0.1),
+                            noise(uv * 20.0)
+                        );
+                        
+                        color += galaxyColor * intensity;
                     }
                 }
                 
                 return color;
             }
             
-            // Enhanced accretion disk
+            // Enhanced accretion disk with better visual effects and photon ring
             vec3 getAccretionDisk(vec3 pos, vec3 velocity) {
                 float r = length(pos.xz);
                 if(r < ACCRETION_INNER * u_black_hole_mass || r > ACCRETION_OUTER * u_black_hole_mass) 
                     return vec3(0.0);
                 
-                // Only render near the disk plane
-                float diskHeight = 0.2 * u_black_hole_mass;
-                if(abs(pos.y) > diskHeight) return vec3(0.0);
+                // Enhanced disk thickness with smooth falloff
+                float diskHeight = 0.5 * u_black_hole_mass;
+                float heightFalloff = exp(-abs(pos.y) / (diskHeight * 0.3));
+                if(heightFalloff < 0.005) return vec3(0.0);
                 
                 float angle = atan(pos.z, pos.x);
                 
                 // Orbital velocity for Keplerian disk
                 float orbitalVel = sqrt(u_black_hole_mass / r);
-                float expectedAngle = angle + orbitalVel * u_time;
+                float rotationAngle = angle + orbitalVel * u_time * 0.3;
                 
-                // Spiral pattern
-                float spiral = sin(expectedAngle * 3.0 + r * 0.8);
-                float spiralIntensity = 0.7 + 0.3 * spiral;
+                // Multiple spiral arms with different frequencies for complex structure
+                float spiral1 = sin(rotationAngle * 1.5 - r * 0.3);
+                float spiral2 = sin(rotationAngle * 2.8 - r * 0.6);
+                float spiral3 = sin(rotationAngle * 4.2 - r * 0.9);
+                float spiral4 = sin(rotationAngle * 6.5 - r * 1.3);
                 
-                // Temperature gradient (inner parts hotter)
-                float temperature = 8000.0 * u_black_hole_mass / (r - ACCRETION_INNER * 0.5);
-                temperature = clamp(temperature, 1000.0, 15000.0);
+                float spiralPattern = (spiral1 + spiral2 * 0.8 + spiral3 * 0.6 + spiral4 * 0.4) / 2.8;
+                float spiralIntensity = 0.5 + 0.5 * spiralPattern;
                 
-                // Blackbody color approximation
+                // Enhanced temperature gradient with more realistic physics
+                float temperature = 15000.0 * sqrt(u_black_hole_mass) / sqrt(r);
+                temperature = clamp(temperature, 2000.0, 25000.0);
+                
+                // More dramatic blackbody color with enhanced brightness
                 vec3 color = vec3(1.0);
-                if(temperature > 12000.0) {
-                    color = vec3(0.7, 0.8, 1.5); // Blue-white (very hot)
-                } else if(temperature > 8000.0) {
-                    color = vec3(1.0, 0.9, 1.2); // White
+                if(temperature > 20000.0) {
+                    color = vec3(0.6, 0.8, 2.2); // Intense blue-white (extremely hot)
+                } else if(temperature > 15000.0) {
+                    color = vec3(0.7, 0.9, 1.8); // Blue-white (very hot)
+                } else if(temperature > 10000.0) {
+                    color = vec3(0.9, 1.0, 1.5); // White-blue
+                } else if(temperature > 7000.0) {
+                    color = vec3(1.1, 1.1, 1.3); // White
                 } else if(temperature > 5000.0) {
-                    color = vec3(1.2, 1.0, 0.6); // Yellow-white
-                } else if(temperature > 3000.0) {
-                    color = vec3(1.5, 0.8, 0.3); // Orange
+                    color = vec3(1.4, 1.1, 0.8); // Yellow-white
+                } else if(temperature > 3500.0) {
+                    color = vec3(1.8, 1.0, 0.5); // Orange
                 } else {
-                    color = vec3(1.2, 0.4, 0.2); // Red
+                    color = vec3(1.6, 0.6, 0.3); // Red
                 }
                 
-                // Intensity based on distance and disk physics
-                float baseIntensity = 0.8 / (r * r);
-                baseIntensity *= smoothstep(ACCRETION_OUTER * u_black_hole_mass, ACCRETION_INNER * u_black_hole_mass, r);
+                // Enhanced base intensity with better falloff
+                float baseIntensity = u_disk_brightness * 1.5 / (r * 0.8);
+                
+                // Inner region gets much brighter (closer to black hole = more energy)
+                if(r < ACCRETION_INNER * u_black_hole_mass * 2.0) {
+                    baseIntensity *= 3.0 * exp(-(r - ACCRETION_INNER * u_black_hole_mass));
+                }
+                
+                // Smooth transition from inner to outer regions
+                baseIntensity *= smoothstep(ACCRETION_OUTER * u_black_hole_mass, ACCRETION_INNER * u_black_hole_mass * 0.8, r);
                 baseIntensity *= spiralIntensity;
+                baseIntensity *= heightFalloff;
                 
-                // Doppler beaming effect
+                // Enhanced Doppler beaming effect with more dramatic color shifts
                 if(u_doppler_beaming) {
-                    vec3 diskVel = vec3(-pos.z, 0.0, pos.x) * orbitalVel / r;
-                    float dopplerFactor = 1.0 + dot(normalize(velocity), diskVel) * 0.1;
-                    baseIntensity *= dopplerFactor;
-                    color *= pow(dopplerFactor, 0.25);
+                    vec3 diskVel = normalize(vec3(-pos.z, 0.0, pos.x)) * orbitalVel;
+                    vec3 viewDir = normalize(u_camera_pos - pos);
+                    float dopplerFactor = 1.0 + dot(diskVel, viewDir) * 0.25;
+                    baseIntensity *= pow(dopplerFactor, 4.0);
+                    
+                    // More dramatic color shift due to Doppler effect
+                    if(dopplerFactor > 1.0) {
+                        // Approaching side - bluer and brighter
+                        color = mix(color, color * vec3(0.6, 0.8, 1.6), (dopplerFactor - 1.0) * 3.0);
+                    } else {
+                        // Receding side - redder and dimmer
+                        color = mix(color, color * vec3(1.6, 0.8, 0.5), (1.0 - dopplerFactor) * 3.0);
+                    }
                 }
                 
-                // Add turbulence
-                float turbulence = noise(vec2(angle * 10.0, r * 2.0) + u_time * 0.5);
-                baseIntensity *= 0.8 + 0.4 * turbulence;
+                // Add multiple layers of turbulence for realistic disk structure
+                float turbulence1 = noise(vec2(angle * 6.0 + u_time * 0.2, r * 1.2));
+                float turbulence2 = noise(vec2(angle * 12.0 + u_time * 0.5, r * 2.4));
+                float turbulence3 = noise(vec2(angle * 25.0 + u_time * 0.8, r * 4.8));
+                float combinedTurbulence = turbulence1 * 0.6 + turbulence2 * 0.3 + turbulence3 * 0.1;
+                baseIntensity *= 0.6 + 0.8 * combinedTurbulence;
+                
+                // Photon ring effect - bright ring around the black hole
+                float photonRingRadius = SCHWARZSCHILD_RADIUS * u_black_hole_mass * 2.6;
+                float ringDistance = abs(r - photonRingRadius);
+                if(ringDistance < 0.8) {
+                    float ringIntensity = (0.8 - ringDistance) / 0.8;
+                    ringIntensity = pow(ringIntensity, 0.3);
+                    baseIntensity += ringIntensity * 2.5;
+                    color = mix(color, vec3(0.8, 1.0, 1.5), ringIntensity * 0.4);
+                }
+                
+                // Inner rim intense glow effect (innermost stable circular orbit)
+                float innerGlow = exp(-(r - ACCRETION_INNER * u_black_hole_mass) * 1.5);
+                if(r < ACCRETION_INNER * u_black_hole_mass * 1.8) {
+                    baseIntensity += innerGlow * 1.8;
+                    color = mix(color, vec3(0.4, 0.9, 2.0), innerGlow * 0.5);
+                }
+                
+                // Add disk warping effects near the black hole
+                if(r < ACCRETION_INNER * u_black_hole_mass * 3.0) {
+                    float warpEffect = sin(angle * 8.0 + u_time * 2.0) * 0.2;
+                    baseIntensity *= (1.0 + warpEffect);
+                }
                 
                 return color * baseIntensity;
             }
@@ -316,16 +334,16 @@ let scene, camera, renderer, material, mesh;
             // Schwarzschild metric ray bending
             vec3 schwarzschildDeflection(vec3 pos, vec3 dir, float mass) {
                 float r = length(pos);
-                if(r < SCHWARZSCHILD_RADIUS * mass * 0.6) return dir; // Inside event horizon
+                if(r < SCHWARZSCHILD_RADIUS * mass * 0.8) return dir;
                 
                 vec3 toCenter = -pos / r;
                 float rs = SCHWARZSCHILD_RADIUS * mass;
                 
-                // Geodesic deflection (simplified)
+                // Enhanced geodesic deflection
                 float deflectionStrength = rs / (r * r - rs * r);
                 vec3 perpComponent = dir - dot(dir, toCenter) * toCenter;
                 
-                return normalize(dir + toCenter * deflectionStrength * 0.1 + perpComponent * deflectionStrength * 0.05);
+                return normalize(dir + toCenter * deflectionStrength * 0.12 + perpComponent * deflectionStrength * 0.08);
             }
             
             void main() {
@@ -350,14 +368,14 @@ let scene, camera, renderer, material, mesh;
                     float r = length(rayPos);
                     float schwarzschildRadius = SCHWARZSCHILD_RADIUS * u_black_hole_mass;
                     
-                    // Check event horizon
-                    if(r < schwarzschildRadius * 1.1) {
+                    // Check event horizon with photon sphere
+                    if(r < schwarzschildRadius * 1.2) {
                         hitEventHorizon = true;
                         break;
                     }
                     
-                    // Gravitational lensing
-                    if(u_gravitational_lensing && r < 30.0) {
+                    // Enhanced gravitational lensing
+                    if(u_gravitational_lensing && r < 50.0) {
                         rayDir = schwarzschildDeflection(rayPos, rayDir, u_black_hole_mass);
                     }
                     
@@ -365,59 +383,66 @@ let scene, camera, renderer, material, mesh;
                     if(u_accretion_disk) {
                         vec3 nextPos = rayPos + rayDir * stepSize;
                         
-                        // Disk intersection (y = 0 plane)
-                        if(rayPos.y * nextPos.y <= 0.0 && abs(rayPos.y) < 1.0) {
+                        // Improved disk intersection
+                        if(rayPos.y * nextPos.y <= 0.0 && abs(rayPos.y) < 2.0) {
                             float t = -rayPos.y / rayDir.y;
                             if(t > 0.0 && t <= stepSize) {
                                 vec3 intersectPos = rayPos + rayDir * t;
                                 vec3 diskColor = getAccretionDisk(intersectPos, rayDir);
                                 
                                 if(length(diskColor) > 0.01) {
-                                    // Add bloom effect
-                                    float bloom = 1.0 + 0.5 / (length(intersectPos.xz) + 0.1);
-                                    color += diskColor * bloom;
+                                    // Enhanced bloom and scattering
+                                    float bloom = 1.0 + 1.0 / (length(intersectPos.xz) + 0.5);
+                                    float scattering = exp(-length(intersectPos.xz) * 0.1);
+                                    color += diskColor * bloom * (1.0 + scattering * 0.3);
                                 }
                             }
                         }
                     }
                     
-                    // Adaptive step size
-                    stepSize = 0.05 + r * 0.02;
-                    stepSize = min(stepSize, 0.5);
+                    // Adaptive step size based on gravitational field strength
+                    float fieldStrength = schwarzschildRadius / (r * r);
+                    stepSize = 0.05 + r * 0.02 - fieldStrength * 0.3;
+                    stepSize = clamp(stepSize, 0.02, 0.8);
                     
                     rayPos += rayDir * stepSize;
                     
                     // Escape condition
-                    if(r > 100.0) break;
+                    if(r > 150.0) break;
                 }
                 
-                // Render cosmic background if ray escaped
+                // Render background if ray escaped
                 if(!hitEventHorizon) {
                     vec2 skyUV = dirToSphere(normalize(rayPos));
-                    vec3 background = getCosmicBackground(skyUV, normalize(rayPos));
+                    vec3 background = getBackground(skyUV);
                     
                     // Apply gravitational redshift/blueshift
-                    if(u_doppler_beaming && length(u_camera_pos) < 50.0) {
-                        float gravitationalShift = 1.0 - 0.1 / length(u_camera_pos);
+                    if(u_doppler_beaming && length(u_camera_pos) < 80.0) {
+                        float gravitationalShift = 1.0 - 0.05 / length(u_camera_pos);
                         background *= vec3(gravitationalShift, 1.0, 1.0/gravitationalShift);
                     }
                     
                     color += background;
                 }
                 
-                // Post-processing
-                // Tone mapping
-                color = color / (1.0 + color * 0.5);
+                // Enhanced post-processing
+                // HDR tone mapping (Reinhard)
+                color = color / (1.0 + color * 0.8);
                 
-                // Gamma correction
+                // Contrast enhancement
                 color = pow(color, vec3(0.85));
                 
-                // Subtle vignette effect
-                float vignette = 1.0 - 0.2 * length(coord);
+                // Subtle color grading
+                color.r *= 1.05;
+                color.b *= 1.02;
+                
+                // Vignette effect with smooth falloff
+                float vignette = 1.0 - 0.2 * pow(length(coord), 1.5);
                 color *= vignette;
                 
-                // Slight color temperature adjustment for space
-                color *= vec3(1.05, 1.0, 1.1);
+                // Film grain effect
+                float grain = (hash(gl_FragCoord.xy + u_time) - 0.5) * 0.02;
+                color += vec3(grain);
                 
                 gl_FragColor = vec4(color, 1.0);
             }
@@ -443,7 +468,7 @@ let scene, camera, renderer, material, mesh;
                 // Geometry
                 const geometry = new THREE.PlaneGeometry(2, 2);
                 
-                // Material with enhanced uniforms
+                // Material with enhanced uniforms including textures
                 const uniforms = {
                     u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
                     u_time: { value: 0.0 },
@@ -453,7 +478,12 @@ let scene, camera, renderer, material, mesh;
                     u_gravitational_lensing: { value: true },
                     u_doppler_beaming: { value: true },
                     u_black_hole_mass: { value: 1.0 },
-                    u_steps: { value: 80 }
+                    u_steps: { value: 80 },
+                    u_background_texture: { value: backgroundTexture },
+                    u_stars_texture: { value: starsTexture },
+                    u_has_background: { value: backgroundTexture !== undefined },
+                    u_has_stars: { value: starsTexture !== undefined },
+                    u_disk_brightness: { value: 2.0 }
                 };
                 
                 material = new THREE.ShaderMaterial({
@@ -468,9 +498,10 @@ let scene, camera, renderer, material, mesh;
                 
                 setupControls();
                 setupMouseControls();
+                setupFileInputs();
                 updateCamera();
                 
-                console.log('Enhanced Black Hole Simulation with Rich Space Background Loaded');
+                console.log('Enhanced Black Hole Simulation with External Images Loaded');
                 
             } catch (error) {
                 console.error('Initialization failed:', error);
@@ -486,9 +517,11 @@ let scene, camera, renderer, material, mesh;
                 blackHoleMass: document.getElementById('black_hole_mass'),
                 timeScale: document.getElementById('time_scale'),
                 quality: document.getElementById('quality'),
+                diskBrightness: document.getElementById('disk_brightness'),
                 distanceValue: document.getElementById('distance_value'),
                 massValue: document.getElementById('mass_value'),
-                timeValue: document.getElementById('time_value')
+                timeValue: document.getElementById('time_value'),
+                diskBrightnessValue: document.getElementById('disk_brightness_value')
             };
             
             controls.accretionDisk.addEventListener('change', (e) => {
@@ -522,6 +555,12 @@ let scene, camera, renderer, material, mesh;
             
             controls.quality.addEventListener('change', (e) => {
                 material.uniforms.u_steps.value = parseInt(e.target.value);
+            });
+            
+            controls.diskBrightness.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                controls.diskBrightnessValue.textContent = value.toFixed(1);
+                material.uniforms.u_disk_brightness.value = value;
             });
         }
         
@@ -608,20 +647,6 @@ let scene, camera, renderer, material, mesh;
         function animate() {
             requestAnimationFrame(animate);
             
-            // FPS calculation
-            const currentTime = performance.now();
-            frameCount++;
-            fpsUpdateTime += currentTime - lastTime;
-            lastTime = currentTime;
-            
-            // Update FPS display every 500ms
-            if (fpsUpdateTime >= 500) {
-                fps = Math.round((frameCount * 1000) / fpsUpdateTime);
-                document.getElementById('fps-display').textContent = fps;
-                frameCount = 0;
-                fpsUpdateTime = 0;
-            }
-            
             try {
                 if (material) {
                     const timeScale = parseFloat(document.getElementById('time_scale').value);
@@ -639,6 +664,8 @@ let scene, camera, renderer, material, mesh;
         }
         
         window.addEventListener('resize', onWindowResize);
+        
+        // Initialize immediately
         window.addEventListener('load', () => {
             init();
             animate();
