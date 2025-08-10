@@ -7,70 +7,45 @@
         let time = 0;
         let backgroundTexture, starsTexture;
         
-        // File input handlers for loading custom images
-        function setupFileInputs() {
-            const backgroundInput = document.getElementById('background_input');
-            const starsInput = document.getElementById('stars_input');
-            
-            backgroundInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const img = new Image();
-                        img.onload = () => {
-                            const canvas = document.createElement('canvas');
-                            canvas.width = img.width;
-                            canvas.height = img.height;
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0);
-                            
-                            backgroundTexture = new THREE.CanvasTexture(canvas);
-                            backgroundTexture.wrapS = THREE.RepeatWrapping;
-                            backgroundTexture.wrapT = THREE.RepeatWrapping;
-                            
-                            if (material) {
-                                material.uniforms.u_background_texture.value = backgroundTexture;
-                                material.uniforms.u_has_background.value = true;
-                            }
-                            
-                            console.log('Background texture loaded');
-                        };
-                        img.src = event.target.result;
-                    };
-                    reader.readAsDataURL(file);
+        // Load default background and stars images
+        function loadDefaultTextures() {
+            // Load background.jpg
+            const bgImg = new Image();
+            bgImg.src = 'background.jpg';
+            bgImg.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = bgImg.width;
+                canvas.height = bgImg.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(bgImg, 0, 0);
+                backgroundTexture = new THREE.CanvasTexture(canvas);
+                backgroundTexture.wrapS = THREE.RepeatWrapping;
+                backgroundTexture.wrapT = THREE.RepeatWrapping;
+                if (material) {
+                    material.uniforms.u_background_texture.value = backgroundTexture;
+                    material.uniforms.u_has_background.value = true;
                 }
-            });
-            
-            starsInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const img = new Image();
-                        img.onload = () => {
-                            const canvas = document.createElement('canvas');
-                            canvas.width = img.width;
-                            canvas.height = img.height;
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0);
-                            
-                            starsTexture = new THREE.CanvasTexture(canvas);
-                            starsTexture.wrapS = THREE.RepeatWrapping;
-                            starsTexture.wrapT = THREE.RepeatWrapping;
-                            
-                            if (material) {
-                                material.uniforms.u_stars_texture.value = starsTexture;
-                                material.uniforms.u_has_stars.value = true;
-                            }
-                            
-                            console.log('Stars texture loaded');
-                        };
-                        img.src = event.target.result;
-                    };
-                    reader.readAsDataURL(file);
+                console.log('Default background texture loaded');
+            };
+
+            // Load stars.jpg
+            const starsImg = new Image();
+            starsImg.src = 'stars.jpg';
+            starsImg.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = starsImg.width;
+                canvas.height = starsImg.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(starsImg, 0, 0);
+                starsTexture = new THREE.CanvasTexture(canvas);
+                starsTexture.wrapS = THREE.RepeatWrapping;
+                starsTexture.wrapT = THREE.RepeatWrapping;
+                if (material) {
+                    material.uniforms.u_stars_texture.value = starsTexture;
+                    material.uniforms.u_has_stars.value = true;
                 }
-            });
+                console.log('Default stars texture loaded');
+            };
         }
         
         // Vertex shader
@@ -498,7 +473,7 @@
                 
                 setupControls();
                 setupMouseControls();
-                setupFileInputs();
+                loadDefaultTextures();
                 updateCamera();
                 
                 console.log('Enhanced Black Hole Simulation with External Images Loaded');

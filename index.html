@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Black Hole Simulation - Enhanced with External Images</title>
+    <title>Black Hole Simulation</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <link rel="stylesheet" href="styles.css">
@@ -15,17 +15,7 @@
         </div>
     </div>
     
-    <div class="file-inputs" style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.9); padding: 15px; border-radius: 8px; z-index: 100; border: 1px solid #333;">
-        <div style="margin-bottom: 10px; color: #ddd; font-size: 12px;">Load Custom Images:</div>
-        <div style="margin-bottom: 8px;">
-            <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Background Image:</label>
-            <input type="file" id="background_input" accept="image/*" style="font-size: 10px; color: #ccc; width: 150px;">
-        </div>
-        <div>
-            <label style="color: #aaa; font-size: 11px; display: block; margin-bottom: 4px;">Stars Image:</label>
-            <input type="file" id="stars_input" accept="image/*" style="font-size: 10px; color: #ccc; width: 150px;">
-        </div>
-    </div>
+    <!-- Removed file input UI for custom background and star images -->
     
     <div class="controls">
         <div class="control-group">
@@ -78,6 +68,11 @@
         </div>
     </div>
 
+    <div style="position: fixed; bottom: 10px; left: 0; width: 100%; text-align: center; z-index: 200;">
+        <span style="color: #ffcc00; background: rgba(0,0,0,0.8); padding: 8px 16px; border-radius: 6px; font-size: 15px; font-weight: bold;">
+            ⚠️ For best results, switch Quality to <span style="color:#fff">High</span> or <span style="color:#fff">Ultra</span>! Medium may not show all simulation details.
+        </span>
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="app.js"></script> 
 </body>
