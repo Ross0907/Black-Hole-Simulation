@@ -78,3 +78,49 @@ body {
             font-size: 16px;
             z-index: 200;
         }
+
+        /* Mobile optimizations */
+@media (max-width: 600px) {
+    #welcome-overlay div[style*="font-size:3.2em"] {
+        font-size: 2em !important;
+        padding: 0 10px;
+    }
+    #continue-prompt {
+        font-size: 1em !important;
+        padding: 0 10px;
+    }
+    .controls {
+        max-height: 60vh;
+        overflow-y: auto;
+        padding: 8px;
+        font-size: 1em;
+    }
+    .control-group {
+        margin-bottom: 14px;
+        font-size: 1em;
+    }
+    .control-group input[type="range"] {
+        width: 100%;
+        height: 32px;
+        touch-action: pan-x;
+    }
+    .control-group label, .control-group select {
+        font-size: 1em;
+    }
+    #fps-counter, #sys-info {
+        display: none !important;
+    }
+    .info {
+        font-size: 1em;
+        padding: 8px;
+    }
+    .loading {
+        font-size: 1.1em;
+        padding: 10px;
+    }
+    /* Make bottom warning more readable */
+    [style*="position: fixed; bottom: 10px;"] span {
+        font-size: 1em !important;
+        padding: 6px 8px !important;
+    }
+}

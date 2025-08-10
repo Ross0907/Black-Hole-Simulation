@@ -3,7 +3,7 @@
 <head>
     <title>Black Hole Simulation</title>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, shrink-to-fit=no">
     <link rel="stylesheet" href="styles.css">
     <!-- All images now loaded from assets/ folder -->
 </head>
@@ -14,8 +14,8 @@
             <div style="color:#fff;font-family:'Didot','Linotype Didot',serif;font-size:3.2em;letter-spacing:0.04em;text-align:center;font-weight:700;text-shadow:0 0 32px #fff,0 0 8px #b3e0ff;animation:glow 2.5s infinite alternate;">
                 Welcome to a Black Hole Simulation
             </div>
-            <div style="color:#ffcc00;font-family:'Didot','Linotype Didot',serif;font-size:1.3em;margin-top:2em;text-align:center;text-shadow:0 0 8px #ffcc00;">
-                Press <span style="background:#222;padding:0.2em 0.5em;border-radius:4px;color:#fff;box-shadow:0 0 8px #fff;">↑</span> Arrow Up to continue
+            <div id="continue-prompt" style="color:#ffcc00;font-family:'Didot','Linotype Didot',serif;font-size:1.3em;margin-top:2em;text-align:center;text-shadow:0 0 8px #ffcc00;">
+                <!-- Text will be set by JS -->
             </div>
             <div style="color:#b3e0ff;font-family:'Didot','Linotype Didot',serif;font-size:1.1em;margin-top:2.5em;text-align:center;max-width:600px;opacity:0.8;">
                 "Love is the one thing that transcends time and space."<br><span style="font-size:0.8em;opacity:0.7;">— Interstellar</span>
@@ -103,6 +103,6 @@
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="app.js"></script>
-   
+    </script>
 </body>
 </html>

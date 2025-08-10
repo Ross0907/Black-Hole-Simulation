@@ -758,3 +758,33 @@ document.addEventListener('keydown', function(e) {
             init();
             animate();
         }
+
+// Detect mobile device
+function isMobile() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+// Set prompt text based on device
+window.addEventListener('DOMContentLoaded', function() {
+    var prompt = document.getElementById('continue-prompt');
+    if (prompt) {
+        if (isMobile()) {
+            prompt.innerHTML = 'Tap anywhere to continue';
+        } else {
+            prompt.innerHTML = 'Press <span style="background:#222;padding:0.2em 0.5em;border-radius:4px;color:#fff;box-shadow:0 0 8px #fff;">↑</span> Arrow Up to continue';
+        }
+    }
+});
+
+// Add tap-to-continue for mobile
+window.addEventListener('DOMContentLoaded', function() {
+    var overlay = document.getElementById('welcome-overlay');
+    if (overlay) {
+        overlay.addEventListener('touchstart', function() {
+            if (isMobile()) {
+                this.style.opacity = 0;
+                setTimeout(() => this.style.display = 'none', 800);
+            }
+        });
+    }
+});
