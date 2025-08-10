@@ -619,20 +619,34 @@
             material.uniforms.u_resolution.value.set(window.innerWidth, window.innerHeight);
         }
         
+        // FPS counter variables
+        let lastFpsUpdate = performance.now();
+        let frameCount = 0;
+        let fps = 0;
+
         function animate() {
             requestAnimationFrame(animate);
-            
+            frameCount++;
+            const now = performance.now();
+            if (now - lastFpsUpdate > 500) {
+                fps = Math.round((frameCount * 1000) / (now - lastFpsUpdate));
+                frameCount = 0;
+                lastFpsUpdate = now;
+                const fpsElem = document.getElementById('fps-counter');
+                if (fpsElem) fpsElem.textContent = `FPS: ${fps}`;
+            }
+
             try {
                 if (material) {
                     const timeScale = parseFloat(document.getElementById('time_scale').value);
                     time += 0.016 * timeScale;
                     material.uniforms.u_time.value = time;
                 }
-                
+
                 if (renderer && scene && camera) {
                     renderer.render(scene, camera);
                 }
-                
+
             } catch (error) {
                 console.error('Render error:', error);
             }
@@ -641,7 +655,44 @@
         window.addEventListener('resize', onWindowResize);
         
         // Initialize immediately
+        function updateSystemInfo() {
+            // Browser
+            const browserElem = document.getElementById('sys-browser');
+            if (browserElem) {
+                browserElem.textContent = `Browser: ${navigator.userAgent}`;
+            }
+            // Platform
+            const platformElem = document.getElementById('sys-platform');
+            if (platformElem) {
+                platformElem.textContent = `Platform: ${navigator.platform}`;
+            }
+            // Resolution
+            const resElem = document.getElementById('sys-resolution');
+            if (resElem) {
+                resElem.textContent = `Resolution: ${window.innerWidth} x ${window.innerHeight}`;
+            }
+            // GPU (WebGL Renderer)
+            const gpuElem = document.getElementById('sys-gpu');
+            if (gpuElem) {
+                let gpu = '--';
+                try {
+                    const canvas = document.createElement('canvas');
+                    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                    if (gl) {
+                        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                        if (debugInfo) {
+                            gpu = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                        } else {
+                            gpu = gl.getParameter(gl.RENDERER);
+                        }
+                    }
+                } catch (e) {}
+                gpuElem.textContent = `GPU: ${gpu}`;
+            }
+        }
+
         window.addEventListener('load', () => {
+            updateSystemInfo();
             init();
             animate();
         });
