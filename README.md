@@ -118,6 +118,10 @@ black-hole-simulation/
 ├── index.html          # Main HTML page
 ├── app.js              # Three.js application and physics
 ├── styles.css          # UI styling
+├── assets/            # Optional: for organizing media files
+│   ├── background.jpg
+│   ├── starry_background.jpg
+│   └── stars.jpg
 └── README.md           # This file
 ```
 
