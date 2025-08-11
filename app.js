@@ -258,106 +258,77 @@ document.addEventListener('keydown', function(e) {
                 if(r < ACCRETION_INNER * u_black_hole_mass || r > ACCRETION_OUTER * u_black_hole_mass) 
                     return vec3(0.0);
                 
-                // Enhanced disk thickness with smooth falloff
-                float diskHeight = 0.5 * u_black_hole_mass;
-                float heightFalloff = exp(-abs(pos.y) / (diskHeight * 0.3));
-                if(heightFalloff < 0.005) return vec3(0.0);
+                // Disk thickness with smooth falloff
+                float diskHeight = 0.3 * u_black_hole_mass;
+                float heightFalloff = exp(-abs(pos.y) / (diskHeight * 0.5));
+                if(heightFalloff < 0.01) return vec3(0.0);
                 
                 float angle = atan(pos.z, pos.x);
                 
                 // Orbital velocity for Keplerian disk
                 float orbitalVel = sqrt(u_black_hole_mass / r);
-                float rotationAngle = angle + orbitalVel * u_time * 0.3;
+                float rotationAngle = angle + orbitalVel * u_time * 0.5;
                 
-                // Multiple spiral arms with different frequencies for complex structure
-                float spiral1 = sin(rotationAngle * 1.5 - r * 0.3);
-                float spiral2 = sin(rotationAngle * 2.8 - r * 0.6);
-                float spiral3 = sin(rotationAngle * 4.2 - r * 0.9);
-                float spiral4 = sin(rotationAngle * 6.5 - r * 1.3);
+                // Multiple spiral arms with different frequencies
+                float spiral1 = sin(rotationAngle * 2.0 - r * 0.5);
+                float spiral2 = sin(rotationAngle * 3.0 - r * 0.8);
+                float spiral3 = sin(rotationAngle * 5.0 - r * 1.2);
                 
-                float spiralPattern = (spiral1 + spiral2 * 0.8 + spiral3 * 0.6 + spiral4 * 0.4) / 2.8;
-                float spiralIntensity = 0.5 + 0.5 * spiralPattern;
+                float spiralPattern = (spiral1 + spiral2 * 0.7 + spiral3 * 0.5) / 2.2;
+                float spiralIntensity = 0.6 + 0.4 * spiralPattern;
                 
-                // Enhanced temperature gradient with more realistic physics
-                float temperature = 15000.0 * sqrt(u_black_hole_mass) / sqrt(r);
-                temperature = clamp(temperature, 2000.0, 25000.0);
+                // Temperature gradient with realistic physics
+                float temperature = 12000.0 * sqrt(u_black_hole_mass) / sqrt(r);
+                temperature = clamp(temperature, 2000.0, 20000.0);
                 
-                // More dramatic blackbody color with enhanced brightness
+                // Enhanced blackbody color with better temperature mapping
                 vec3 color = vec3(1.0);
-                if(temperature > 20000.0) {
-                    color = vec3(0.6, 0.8, 2.2); // Intense blue-white (extremely hot)
-                } else if(temperature > 15000.0) {
-                    color = vec3(0.7, 0.9, 1.8); // Blue-white (very hot)
+                if(temperature > 15000.0) {
+                    color = vec3(0.6, 0.7, 1.8); // Blue-white (very hot)
                 } else if(temperature > 10000.0) {
-                    color = vec3(0.9, 1.0, 1.5); // White-blue
+                    color = vec3(0.8, 0.9, 1.5); // White-blue
                 } else if(temperature > 7000.0) {
-                    color = vec3(1.1, 1.1, 1.3); // White
+                    color = vec3(1.0, 1.0, 1.2); // White
                 } else if(temperature > 5000.0) {
-                    color = vec3(1.4, 1.1, 0.8); // Yellow-white
+                    color = vec3(1.3, 1.0, 0.7); // Yellow-white
                 } else if(temperature > 3500.0) {
-                    color = vec3(1.8, 1.0, 0.5); // Orange
+                    color = vec3(1.6, 0.9, 0.4); // Orange
                 } else {
-                    color = vec3(1.6, 0.6, 0.3); // Red
+                    color = vec3(1.5, 0.5, 0.2); // Red
                 }
                 
-                // Enhanced base intensity with better falloff
-                float baseIntensity = u_disk_brightness * 1.5 / (r * 0.8);
-                
-                // Inner region gets much brighter (closer to black hole = more energy)
-                if(r < ACCRETION_INNER * u_black_hole_mass * 2.0) {
-                    baseIntensity *= 3.0 * exp(-(r - ACCRETION_INNER * u_black_hole_mass));
-                }
-                
-                // Smooth transition from inner to outer regions
-                baseIntensity *= smoothstep(ACCRETION_OUTER * u_black_hole_mass, ACCRETION_INNER * u_black_hole_mass * 0.8, r);
+                // Base intensity with realistic falloff
+                float baseIntensity = u_disk_brightness / (r * r * 0.5);
+                baseIntensity *= smoothstep(ACCRETION_OUTER * u_black_hole_mass, ACCRETION_INNER * u_black_hole_mass, r);
                 baseIntensity *= spiralIntensity;
                 baseIntensity *= heightFalloff;
                 
-                // Enhanced Doppler beaming effect with more dramatic color shifts
+                // Enhanced Doppler beaming effect
                 if(u_doppler_beaming) {
                     vec3 diskVel = normalize(vec3(-pos.z, 0.0, pos.x)) * orbitalVel;
                     vec3 viewDir = normalize(u_camera_pos - pos);
-                    float dopplerFactor = 1.0 + dot(diskVel, viewDir) * 0.25;
-                    baseIntensity *= pow(dopplerFactor, 4.0);
+                    float dopplerFactor = 1.0 + dot(diskVel, viewDir) * 0.15;
+                    baseIntensity *= pow(dopplerFactor, 3.0);
                     
-                    // More dramatic color shift due to Doppler effect
+                    // Color shift due to Doppler effect
                     if(dopplerFactor > 1.0) {
-                        // Approaching side - bluer and brighter
-                        color = mix(color, color * vec3(0.6, 0.8, 1.6), (dopplerFactor - 1.0) * 3.0);
+                        color = mix(color, color * vec3(0.8, 0.9, 1.3), (dopplerFactor - 1.0) * 2.0);
                     } else {
-                        // Receding side - redder and dimmer
-                        color = mix(color, color * vec3(1.6, 0.8, 0.5), (1.0 - dopplerFactor) * 3.0);
+                        color = mix(color, color * vec3(1.3, 0.9, 0.7), (1.0 - dopplerFactor) * 2.0);
                     }
                 }
                 
-                // Add multiple layers of turbulence for realistic disk structure
-                float turbulence1 = noise(vec2(angle * 6.0 + u_time * 0.2, r * 1.2));
-                float turbulence2 = noise(vec2(angle * 12.0 + u_time * 0.5, r * 2.4));
-                float turbulence3 = noise(vec2(angle * 25.0 + u_time * 0.8, r * 4.8));
-                float combinedTurbulence = turbulence1 * 0.6 + turbulence2 * 0.3 + turbulence3 * 0.1;
-                baseIntensity *= 0.6 + 0.8 * combinedTurbulence;
+                // Add turbulence and flickering
+                float turbulence1 = noise(vec2(angle * 8.0 + u_time * 0.3, r * 1.5));
+                float turbulence2 = noise(vec2(angle * 15.0 + u_time * 0.7, r * 3.0));
+                float combinedTurbulence = turbulence1 * 0.7 + turbulence2 * 0.3;
+                baseIntensity *= 0.7 + 0.6 * combinedTurbulence;
                 
-                // Photon ring effect - bright ring around the black hole
-                float photonRingRadius = SCHWARZSCHILD_RADIUS * u_black_hole_mass * 2.6;
-                float ringDistance = abs(r - photonRingRadius);
-                if(ringDistance < 0.8) {
-                    float ringIntensity = (0.8 - ringDistance) / 0.8;
-                    ringIntensity = pow(ringIntensity, 0.3);
-                    baseIntensity += ringIntensity * 2.5;
-                    color = mix(color, vec3(0.8, 1.0, 1.5), ringIntensity * 0.4);
-                }
-                
-                // Inner rim intense glow effect (innermost stable circular orbit)
-                float innerGlow = exp(-(r - ACCRETION_INNER * u_black_hole_mass) * 1.5);
-                if(r < ACCRETION_INNER * u_black_hole_mass * 1.8) {
-                    baseIntensity += innerGlow * 1.8;
-                    color = mix(color, vec3(0.4, 0.9, 2.0), innerGlow * 0.5);
-                }
-                
-                // Add disk warping effects near the black hole
-                if(r < ACCRETION_INNER * u_black_hole_mass * 3.0) {
-                    float warpEffect = sin(angle * 8.0 + u_time * 2.0) * 0.2;
-                    baseIntensity *= (1.0 + warpEffect);
+                // Add inner rim glow effect
+                float innerGlow = exp(-(r - ACCRETION_INNER * u_black_hole_mass) * 2.0);
+                if(r < ACCRETION_INNER * u_black_hole_mass * 1.5) {
+                    baseIntensity += innerGlow * 0.5;
+                    color = mix(color, vec3(0.5, 0.8, 1.5), innerGlow * 0.3);
                 }
                 
                 return color * baseIntensity;
@@ -515,7 +486,7 @@ document.addEventListener('keydown', function(e) {
                     u_stars_texture: { value: starsTexture },
                     u_has_background: { value: backgroundTexture !== undefined },
                     u_has_stars: { value: starsTexture !== undefined },
-                    u_disk_brightness: { value: 2.0 }
+                    u_disk_brightness: { value: 5.0 }
                 };
                 
                 material = new THREE.ShaderMaterial({
