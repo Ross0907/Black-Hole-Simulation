@@ -788,3 +788,51 @@ window.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+function handleCustomImage(inputId, callback) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    input.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                callback(new THREE.CanvasTexture(canvas));
+            };
+            img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+// Call these after material is created in init()
+function setupCustomImageInputs() {
+    handleCustomImage('custom_bg', function(tex) {
+        backgroundTexture = tex;
+        if (material) {
+            material.uniforms.u_background_texture.value = backgroundTexture;
+            material.uniforms.u_has_background.value = true;
+        }
+    });
+    handleCustomImage('custom_stars', function(tex) {
+        starsTexture = tex;
+        if (material) {
+            material.uniforms.u_stars_texture.value = starsTexture;
+            material.uniforms.u_has_stars.value = true;
+        }
+    });
+}
+
+// In your init() function, after material is created:
+setupCustomImageInputs();
+
+document.getElementById('controls-toggle').onclick = function() {
+    const panel = document.getElementById('controls-content');
+    panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'block' : 'none';
+};
