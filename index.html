@@ -3,7 +3,11 @@
 <head>
     <title>Black Hole Simulation</title>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
     <link rel="stylesheet" href="styles.css">
     <!-- All images now loaded from assets/ folder -->
 </head>
@@ -32,7 +36,8 @@
     
     <div class="info">
         <div id="hint-text">
-            🌌 Drag to orbit • Scroll to zoom • Watch light bend around the black hole
+            <span class="desktop-hint">🌌 Drag to orbit • Scroll to zoom • WASD/Arrows to move • Watch light bend around the black hole</span>
+            <span class="mobile-hint" style="display:none;">🌌 Touch & drag to orbit • Pinch to zoom • Use joystick to move • Watch light bend around the black hole</span>
         </div>
     </div>
     <div id="fps-counter" style="position:fixed;top:6px;left:6px;z-index:9999;color:#fff;background:rgba(0,0,0,0.55);padding:1px 5px;border-radius:3px;font-size:9px;font-family:monospace;font-weight:bold;box-shadow:0 1px 2px #000;line-height:1;">FPS: --</div>
@@ -43,11 +48,11 @@
         <div id="sys-gpu">GPU: --</div>
     </div>
     
-    <div id="controls-panel" style="position:fixed;top:50px;right:18px;z-index:9999;">
-        <button id="controls-toggle" style="background:#222;color:#fff;padding:6px 18px;border-radius:6px;border:none;box-shadow:0 1px 4px #000;cursor:pointer;font-size:15px;font-weight:bold;">
+    <div id="controls-panel" style="position:fixed;top:15px;right:15px;z-index:9999;">
+        <button id="controls-toggle" style="background:#222;color:#fff;padding:8px 16px;border-radius:8px;border:none;box-shadow:0 2px 8px rgba(0,0,0,0.6);cursor:pointer;font-size:14px;font-weight:bold;transition:all 0.3s ease;touch-action:manipulation;">
             ⚙️ Controls
         </button>
-        <div class="controls" id="controls-content" style="display:none;margin-top:8px;background:rgba(0,0,0,0.92);padding:18px 18px 12px 18px;border-radius:12px;box-shadow:0 2px 12px #000;">
+        <div class="controls" id="controls-content" style="display:none;margin-top:8px;background:rgba(0,0,0,0.92);padding:18px 18px 12px 18px;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.8);max-height:70vh;overflow-y:auto;min-width:240px;">
             <div class="control-group">
                 <label>
                     <input type="checkbox" id="accretion_disk" checked> Accretion Disk
@@ -79,9 +84,9 @@
                 <label>Quality: 
                     <select id="quality">
                         <option value="40">Fast</option>
-                        <option value="80" selected>Medium</option>
+                        <option value="80">Medium</option>
                         <option value="120">High</option>
-                        <option value="160">Ultra</option>
+                        <option value="160" selected>Ultra</option>
                     </select>
                 </label>
             </div>
@@ -95,12 +100,24 @@
             <div class="control-group">
                 <label>Custom Stars: <input type="file" id="custom_stars" accept="image/*"></label>
             </div>
+            <div class="control-group">
+                <button id="reset-camera" style="width:100%;padding:8px;background:#4a9eff;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;">
+                    🎯 Reset Camera Position
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Touch Joystick -->
+    <div id="mobile-joystick" style="display:none;position:fixed;bottom:30px;left:20px;width:100px;height:100px;z-index:9998;pointer-events:auto;">
+        <div id="joystick-base" style="width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);position:relative;touch-action:none;">
+            <div id="joystick-knob" style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.7);position:absolute;top:30px;left:30px;transition:none;box-shadow:0 2px 8px rgba(0,0,0,0.3);pointer-events:none;"></div>
         </div>
     </div>
 
     <div style="position: fixed; bottom: 10px; left: 0; width: 100%; text-align: center; z-index: 200;">
-        <span style="color: #ffcc00; background: rgba(0,0,0,0.8); padding: 8px 16px; border-radius: 6px; font-size: 15px; font-weight: bold;">
-            ⚠️ For best results, switch Quality to <span style="color:#fff">High</span> or <span style="color:#fff">Ultra</span>! Medium may not show all simulation details.
+        <span style="color: #ffcc00; background: rgba(0,0,0,0.8); padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold;">
+            ⚠️ For best results, switch Quality to <span style="color:#fff">High</span> or <span style="color:#fff">Ultra</span>!
         </span>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
