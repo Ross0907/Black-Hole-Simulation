@@ -60,9 +60,15 @@ document.addEventListener('keydown', function(e) {
         let isMouseDown = false;
         let cameraDistance = 12.0;
         let cameraTheta = 0;
-        let cameraPhi = Math.PI * 0.4;
+        let cameraPhi = Math.PI * 0.5; // More centered view
         let time = 0;
         let backgroundTexture, starsTexture;
+        
+        // Camera movement variables for mobile
+        let cameraOffsetX = 0;
+        let cameraOffsetY = 3.0; // Start with upward offset for better centering
+        let cameraOffsetZ = 0;
+        let moveSpeed = 0.1;
         
         // Load default background and stars images
         function loadDefaultTextures() {
@@ -475,13 +481,13 @@ document.addEventListener('keydown', function(e) {
                 const uniforms = {
                     u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
                     u_time: { value: 0.0 },
-                    u_camera_pos: { value: new THREE.Vector3(12, 0, 0) },
+                    u_camera_pos: { value: new THREE.Vector3(0, 8, 12) }, // Better initial position for centering
                     u_camera_matrix: { value: new THREE.Matrix3() },
                     u_accretion_disk: { value: true },
                     u_gravitational_lensing: { value: true },
                     u_doppler_beaming: { value: true },
                     u_black_hole_mass: { value: 1.0 },
-                    u_steps: { value: 80 },
+                    u_steps: { value: 160 }, // Default to Ultra quality
                     u_background_texture: { value: backgroundTexture },
                     u_stars_texture: { value: starsTexture },
                     u_has_background: { value: backgroundTexture !== undefined },
@@ -501,6 +507,8 @@ document.addEventListener('keydown', function(e) {
                 
                 setupControls();
                 setupMouseControls();
+                setupTouchControls(); // Add touch gesture support
+                setupMobileControls(); // Add mobile setup
                 loadDefaultTextures();
                 updateCamera();
                 
@@ -615,14 +623,129 @@ document.addEventListener('keydown', function(e) {
             canvas.style.cursor = 'grab';
         }
         
+        // Enhanced touch controls with pinch-to-zoom
+        function setupTouchControls() {
+            const canvas = renderer.domElement;
+            let touches = {};
+            let initialDistance = 0;
+            let initialCameraDistance = cameraDistance;
+            
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                
+                // Handle single touch (drag to orbit)
+                if (e.touches.length === 1) {
+                    const touch = e.touches[0];
+                    touches.single = {
+                        id: touch.identifier,
+                        startX: touch.clientX,
+                        startY: touch.clientY,
+                        lastX: touch.clientX,
+                        lastY: touch.clientY
+                    };
+                }
+                
+                // Handle pinch gesture (zoom)
+                if (e.touches.length === 2) {
+                    const touch1 = e.touches[0];
+                    const touch2 = e.touches[1];
+                    
+                    initialDistance = Math.hypot(
+                        touch2.clientX - touch1.clientX,
+                        touch2.clientY - touch1.clientY
+                    );
+                    initialCameraDistance = cameraDistance;
+                    
+                    touches.pinch = {
+                        touch1: { x: touch1.clientX, y: touch1.clientY },
+                        touch2: { x: touch2.clientX, y: touch2.clientY },
+                        distance: initialDistance
+                    };
+                    
+                    // Clear single touch when pinching starts
+                    touches.single = null;
+                }
+            });
+            
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                
+                // Handle single touch drag
+                if (e.touches.length === 1 && touches.single) {
+                    const touch = e.touches[0];
+                    const deltaX = touch.clientX - touches.single.lastX;
+                    const deltaY = touch.clientY - touches.single.lastY;
+                    
+                    cameraTheta -= deltaX * 0.008;
+                    cameraPhi = Math.max(0.1, Math.min(Math.PI - 0.1, cameraPhi - deltaY * 0.008));
+                    
+                    touches.single.lastX = touch.clientX;
+                    touches.single.lastY = touch.clientY;
+                    
+                    updateCamera();
+                }
+                
+                // Handle pinch zoom
+                if (e.touches.length === 2 && touches.pinch) {
+                    const touch1 = e.touches[0];
+                    const touch2 = e.touches[1];
+                    
+                    const currentDistance = Math.hypot(
+                        touch2.clientX - touch1.clientX,
+                        touch2.clientY - touch1.clientY
+                    );
+                    
+                    const scale = currentDistance / initialDistance;
+                    const newDistance = initialCameraDistance / scale;
+                    
+                    cameraDistance = Math.max(3.0, Math.min(25.0, newDistance));
+                    
+                    document.getElementById('observer_distance').value = cameraDistance;
+                    document.getElementById('distance_value').textContent = cameraDistance.toFixed(1);
+                    updateCamera();
+                }
+            });
+            
+            canvas.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                
+                // Clear ended touches
+                if (e.touches.length === 0) {
+                    touches = {};
+                } else if (e.touches.length === 1) {
+                    // Switch from pinch to single touch if one finger lifted
+                    touches.pinch = null;
+                    const touch = e.touches[0];
+                    touches.single = {
+                        id: touch.identifier,
+                        startX: touch.clientX,
+                        startY: touch.clientY,
+                        lastX: touch.clientX,
+                        lastY: touch.clientY
+                    };
+                }
+            });
+            
+            // Prevent context menu on long press
+            canvas.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+            });
+        }
+        
         function updateCamera() {
             if (!material) return;
             
+            // Calculate base orbital position
             const x = cameraDistance * Math.sin(cameraPhi) * Math.cos(cameraTheta);
             const y = cameraDistance * Math.cos(cameraPhi);
             const z = cameraDistance * Math.sin(cameraPhi) * Math.sin(cameraTheta);
             
-            const cameraPos = new THREE.Vector3(x, y, z);
+            // Apply world-space offsets for mobile movement
+            const cameraPos = new THREE.Vector3(
+                x + cameraOffsetX, 
+                y + cameraOffsetY, 
+                z + cameraOffsetZ
+            );
             
             const up = new THREE.Vector3(0, 1, 0);
             const forward = new THREE.Vector3(0, 0, 0).sub(cameraPos).normalize();
@@ -732,7 +855,41 @@ document.addEventListener('keydown', function(e) {
 
 // Detect mobile device
 function isMobile() {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+           (window.innerWidth <= 768) || 
+           ('ontouchstart' in window);
+}
+
+// Enhanced mobile detection for better UX
+function getTouchCapability() {
+    return {
+        hasTouch: 'ontouchstart' in window,
+        isMobile: isMobile(),
+        isTablet: window.innerWidth > 768 && window.innerWidth <= 1024 && 'ontouchstart' in window,
+        screenSize: {
+            width: window.innerWidth,
+            height: window.innerHeight
+        }
+    };
+}
+
+// Optimize quality for mobile devices
+function optimizeForMobile() {
+    if (isMobile()) {
+        const qualitySelect = document.getElementById('quality');
+        if (qualitySelect) {
+            // Set to Medium quality for better performance on mobile
+            qualitySelect.value = '80';
+            console.log('Optimized quality for mobile device');
+        }
+        
+        // Reduce some visual effects for performance
+        const timeScale = document.getElementById('time_scale');
+        if (timeScale && parseFloat(timeScale.value) > 2.0) {
+            timeScale.value = '2.0';
+            document.getElementById('time_value').textContent = '2.0';
+        }
+    }
 }
 
 // Set prompt text based on device
@@ -745,6 +902,9 @@ window.addEventListener('DOMContentLoaded', function() {
             prompt.innerHTML = 'Press <span style="background:#222;padding:0.2em 0.5em;border-radius:4px;color:#fff;box-shadow:0 0 8px #fff;">↑</span> Arrow Up to continue';
         }
     }
+    
+    // Optimize for mobile on load
+    optimizeForMobile();
 });
 
 // Add tap-to-continue for mobile
@@ -806,4 +966,203 @@ setupCustomImageInputs();
 document.getElementById('controls-toggle').onclick = function() {
     const panel = document.getElementById('controls-content');
     panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'block' : 'none';
+    this.textContent = panel.style.display === 'block' ? '⚙️ Hide Controls' : '⚙️ Controls';
 };
+
+// Mobile functionality
+function setupMobileControls() {
+    updateHintText();
+    
+    // Fix controls toggle for mobile
+    const controlsToggle = document.getElementById('controls-toggle');
+    const controlsContent = document.getElementById('controls-content');
+    
+    if (controlsToggle && controlsContent) {
+        // Remove any existing onclick
+        controlsToggle.onclick = null;
+        
+        // Add proper touch/click handling
+        function toggleControls(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const isHidden = controlsContent.style.display === 'none' || controlsContent.style.display === '';
+            controlsContent.style.display = isHidden ? 'block' : 'none';
+            controlsToggle.textContent = isHidden ? '⚙️ Hide Controls' : '⚙️ Controls';
+        }
+        
+        controlsToggle.addEventListener('click', toggleControls);
+        controlsToggle.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        controlsToggle.addEventListener('touchend', toggleControls);
+    }
+    
+    // Add reset camera button functionality
+    const resetButton = document.getElementById('reset-camera');
+    if (resetButton) {
+        resetButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            cameraOffsetX = 0;
+            cameraOffsetY = 3.0;
+            cameraOffsetZ = 0;
+            cameraDistance = 12.0;
+            cameraTheta = 0;
+            cameraPhi = Math.PI * 0.5;
+            
+            // Update UI
+            document.getElementById('observer_distance').value = cameraDistance;
+            document.getElementById('distance_value').textContent = cameraDistance.toFixed(1);
+            
+            updateCamera();
+        });
+    }
+    
+    // Ensure file inputs work on mobile
+    const customBgInput = document.getElementById('custom_bg');
+    const customStarsInput = document.getElementById('custom_stars');
+    
+    [customBgInput, customStarsInput].forEach(input => {
+        if (input) {
+            input.style.pointerEvents = 'auto';
+            input.style.touchAction = 'manipulation';
+            input.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+            });
+        }
+    });
+    
+    // Fix quality dropdown for mobile
+    const qualitySelect = document.getElementById('quality');
+    if (qualitySelect) {
+        qualitySelect.style.pointerEvents = 'auto';
+        qualitySelect.style.touchAction = 'manipulation';
+        qualitySelect.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+        });
+    }
+}
+
+function updateHintText() {
+    const desktopHint = document.querySelector('.desktop-hint');
+    const mobileHint = document.querySelector('.mobile-hint');
+    const joystick = document.getElementById('mobile-joystick');
+    
+    if (isMobile()) {
+        if (desktopHint) desktopHint.style.display = 'none';
+        if (mobileHint) mobileHint.style.display = 'inline';
+        if (joystick) joystick.style.display = 'block';
+        setupMobileJoystick();
+    } else {
+        if (desktopHint) desktopHint.style.display = 'inline';
+        if (mobileHint) mobileHint.style.display = 'none';
+        if (joystick) joystick.style.display = 'none';
+    }
+}
+
+// Mobile joystick setup
+function setupMobileJoystick() {
+    const joystickBase = document.getElementById('joystick-base');
+    const joystickKnob = document.getElementById('joystick-knob');
+    
+    if (!joystickBase || !joystickKnob) return;
+    
+    let isDragging = false;
+    let centerX = 50, centerY = 50; // Center of joystick base
+    
+    function handleStart(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        isDragging = true;
+    }
+    
+    function handleMove(e) {
+        if (!isDragging) return;
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const touch = e.touches ? e.touches[0] : e;
+        const rect = joystickBase.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        
+        // Calculate distance from center
+        const deltaX = x - centerX;
+        const deltaY = y - centerY;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        
+        // Limit to joystick base radius
+        const maxDistance = 30;
+        let finalX = deltaX;
+        let finalY = deltaY;
+        
+        if (distance > maxDistance) {
+            finalX = (deltaX / distance) * maxDistance;
+            finalY = (deltaY / distance) * maxDistance;
+        }
+        
+        // Update knob position
+        joystickKnob.style.left = (centerX + finalX - 20) + 'px';
+        joystickKnob.style.top = (centerY + finalY - 20) + 'px';
+        
+        // Update camera movement
+        const moveX = finalX / maxDistance;
+        const moveY = finalY / maxDistance;
+        
+        const moveSpeed = 0.1;
+        cameraOffsetX += moveX * moveSpeed;
+        cameraOffsetY -= moveY * moveSpeed; // Invert Y for natural movement
+        
+        updateCamera();
+    }
+    
+    function handleEnd(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        isDragging = false;
+        
+        // Reset knob to center with smooth animation
+        joystickKnob.style.transition = 'all 0.2s ease';
+        joystickKnob.style.left = '30px';
+        joystickKnob.style.top = '30px';
+        
+        setTimeout(() => {
+            joystickKnob.style.transition = 'none';
+        }, 200);
+    }
+    
+    // Touch events
+    joystickBase.addEventListener('touchstart', handleStart);
+    document.addEventListener('touchmove', handleMove);
+    document.addEventListener('touchend', handleEnd);
+    
+    // Mouse events for testing
+    joystickBase.addEventListener('mousedown', handleStart);
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleEnd);
+}
+
+// Setup mobile controls on load
+window.addEventListener('DOMContentLoaded', function() {
+    updateHintText();
+    
+    // Add reset camera button functionality
+    const resetButton = document.getElementById('reset-camera');
+    if (resetButton) {
+        resetButton.addEventListener('click', () => {
+            cameraOffsetX = 0;
+            cameraOffsetY = 3.0; // Better centered default
+            cameraOffsetZ = 0;
+            cameraDistance = 12.0;
+            cameraTheta = 0;
+            cameraPhi = Math.PI * 0.5;
+            
+            // Update UI
+            document.getElementById('observer_distance').value = cameraDistance;
+            document.getElementById('distance_value').textContent = cameraDistance.toFixed(1);
+            
+            updateCamera();
+        });
+    }
+});
