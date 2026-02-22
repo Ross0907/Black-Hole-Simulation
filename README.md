@@ -53,25 +53,6 @@ This simulation is heavily inspired by the excellent physics explanations from *
 - **Gravitational Redshift**: Light loses energy climbing out of gravitational well
 - **Time Dilation**: Effects of strong gravitational fields on light propagation
 
-### Additional Physics Resources
-
-For deeper understanding of the physics behind this simulation:
-
-1. **General Relativity & Black Holes**:
-   - [ScienceClic English - Black Hole Playlist](https://www.youtube.com/c/ScienceClicEN)
-   - Einstein's General Theory of Relativity
-   - Schwarzschild Solution to Einstein Field Equations
-
-2. **Accretion Disk Physics**:
-   - Shakura-Sunyaev Accretion Disk Model
-   - Magnetohydrodynamics (MHD) in Astrophysics
-   - Relativistic Astrophysics
-
-3. **Computational Aspects**:
-   - Ray Tracing in Curved Spacetime
-   - Numerical Integration of Geodesics
-   - GPU Shader Programming for Physics Simulation
-
 ## Installation & Usage
 
 ### Prerequisites
