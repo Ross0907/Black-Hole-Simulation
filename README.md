@@ -27,9 +27,9 @@ A real-time interactive black hole simulation built with Three.js and WebGL shad
 This simulation is heavily inspired by the excellent physics explanations from **ScienceClic English**:
 
 **Primary References**:
--[Simulating Black Holes in C++ by kavan](https://youtu.be/8-B6ryuBkCM?si=lU-xfqlKhvhvAgpU)
--[similar black hole simulation by oseiskar](https://oseiskar.github.io/black-hole/)
--[physics by oseiskar](https://oseiskar.github.io/black-hole/docs/physics.html)
+- [Simulating Black Holes in C++ by kavan](https://youtu.be/8-B6ryuBkCM?si=lU-xfqlKhvhvAgpU)
+- [similar black hole simulation by oseiskar](https://oseiskar.github.io/black-hole/)
+- [physics by oseiskar](https://oseiskar.github.io/black-hole/docs/physics.html)
 ### Physics Concepts Implemented
 
 #### **Gravitational Lensing**
