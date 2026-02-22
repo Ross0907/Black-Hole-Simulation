@@ -15,13 +15,7 @@ A real-time interactive black hole simulation built with Three.js and WebGL shad
 - **Rich Cosmic Background**: Procedurally generated stars, galaxies, nebulae, and cosmic dust
 - **Ray Marching**: Real-time ray tracing through curved spacetime
 - **Dynamic Lighting**: Temperature-based blackbody radiation simulation
-
-### **Interactive Controls**
-- **Mouse Controls**: Drag to orbit, scroll to zoom
-- **Real-time Parameters**: Adjust black hole mass, observer distance, and time scale
-- **Quality Settings**: Adjustable ray marching steps for performance optimization
-- **Toggle Features**: Enable/disable individual physics effects
-
+- 
 ## Physics & Inspiration
 
 This simulation is heavily inspired by the excellent physics explanations from **ScienceClic English**:
