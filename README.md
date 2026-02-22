@@ -4,19 +4,19 @@ A real-time interactive black hole simulation built with Three.js and WebGL shad
 
 ## Features
 
-### 🌌 **Realistic Physics**
+### **Realistic Physics**
 - **Gravitational Lensing**: Light rays bend around the black hole's massive gravitational field
 - **Schwarzschild Metric**: Accurate spacetime curvature calculations
 - **Doppler Beaming**: Relativistic effects on light from rotating accretion disk
 - **Event Horizon**: Proper black hole boundary rendering
 
-### ✨ **Visual Effects**
+### **Visual Effects**
 - **Accretion Disk**: Realistic hot plasma disk with temperature-based coloring
 - **Rich Cosmic Background**: Procedurally generated stars, galaxies, nebulae, and cosmic dust
 - **Ray Marching**: Real-time ray tracing through curved spacetime
 - **Dynamic Lighting**: Temperature-based blackbody radiation simulation
 
-### 🎮 **Interactive Controls**
+### **Interactive Controls**
 - **Mouse Controls**: Drag to orbit, scroll to zoom
 - **Real-time Parameters**: Adjust black hole mass, observer distance, and time scale
 - **Quality Settings**: Adjustable ray marching steps for performance optimization
@@ -145,10 +145,10 @@ black-hole-simulation/
 
 ## Browser Compatibility
 
-- ✅ **Chrome 80+**
-- ✅ **Firefox 75+**
-- ✅ **Safari 14+**
-- ✅ **Edge 80+**
+- **Chrome 80+**
+- **Firefox 75+**
+- **Safari 14+**
+- **Edge 80+**
 
 **Requirements**: WebGL 1.0 support, Hardware acceleration recommended
 
