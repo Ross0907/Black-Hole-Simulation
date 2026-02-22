@@ -2,6 +2,7 @@
 
 A real-time interactive black hole simulation built with Three.js and WebGL shaders, featuring accurate gravitational physics, ray tracing, and stunning cosmic visuals.
 
+Try it out [here](https://ross0907.github.io/Black-Hole-Simulation/)
 ## Features
 
 ### **Realistic Physics**
