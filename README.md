@@ -2,32 +2,29 @@
 
 A real-time interactive black hole simulation built with Three.js and WebGL shaders, featuring accurate gravitational physics, ray tracing, and stunning cosmic visuals.
 
+Try it out [here](https://ross0907.github.io/Black-Hole-Simulation/)
 ## Features
 
-### 🌌 **Realistic Physics**
+### **Realistic Physics**
 - **Gravitational Lensing**: Light rays bend around the black hole's massive gravitational field
 - **Schwarzschild Metric**: Accurate spacetime curvature calculations
 - **Doppler Beaming**: Relativistic effects on light from rotating accretion disk
 - **Event Horizon**: Proper black hole boundary rendering
 
-### ✨ **Visual Effects**
+### **Visual Effects**
 - **Accretion Disk**: Realistic hot plasma disk with temperature-based coloring
 - **Rich Cosmic Background**: Procedurally generated stars, galaxies, nebulae, and cosmic dust
 - **Ray Marching**: Real-time ray tracing through curved spacetime
 - **Dynamic Lighting**: Temperature-based blackbody radiation simulation
-
-### 🎮 **Interactive Controls**
-- **Mouse Controls**: Drag to orbit, scroll to zoom
-- **Real-time Parameters**: Adjust black hole mass, observer distance, and time scale
-- **Quality Settings**: Adjustable ray marching steps for performance optimization
-- **Toggle Features**: Enable/disable individual physics effects
-
+- 
 ## Physics & Inspiration
 
 This simulation is heavily inspired by the excellent physics explanations from **ScienceClic English**:
 
-**Primary Reference Video**: [Simulating Black Holes in C++ by kavan](https://youtu.be/8-B6ryuBkCM?si=lU-xfqlKhvhvAgpU)
-
+**Primary References**:
+- [Simulating Black Holes in C++ by kavan](https://youtu.be/8-B6ryuBkCM?si=lU-xfqlKhvhvAgpU)
+- [similar black hole simulation by oseiskar](https://oseiskar.github.io/black-hole/)
+- [physics by oseiskar](https://oseiskar.github.io/black-hole/docs/physics.html)
 ### Physics Concepts Implemented
 
 #### **Gravitational Lensing**
@@ -50,25 +47,6 @@ This simulation is heavily inspired by the excellent physics explanations from *
 - **Doppler Beaming**: Light from approaching disk appears brighter/bluer
 - **Gravitational Redshift**: Light loses energy climbing out of gravitational well
 - **Time Dilation**: Effects of strong gravitational fields on light propagation
-
-### Additional Physics Resources
-
-For deeper understanding of the physics behind this simulation:
-
-1. **General Relativity & Black Holes**:
-   - [ScienceClic English - Black Hole Playlist](https://www.youtube.com/c/ScienceClicEN)
-   - Einstein's General Theory of Relativity
-   - Schwarzschild Solution to Einstein Field Equations
-
-2. **Accretion Disk Physics**:
-   - Shakura-Sunyaev Accretion Disk Model
-   - Magnetohydrodynamics (MHD) in Astrophysics
-   - Relativistic Astrophysics
-
-3. **Computational Aspects**:
-   - Ray Tracing in Curved Spacetime
-   - Numerical Integration of Geodesics
-   - GPU Shader Programming for Physics Simulation
 
 ## Installation & Usage
 
@@ -145,10 +123,10 @@ black-hole-simulation/
 
 ## Browser Compatibility
 
-- ✅ **Chrome 80+**
-- ✅ **Firefox 75+**
-- ✅ **Safari 14+**
-- ✅ **Edge 80+**
+- **Chrome 80+**
+- **Firefox 75+**
+- **Safari 14+**
+- **Edge 80+**
 
 **Requirements**: WebGL 1.0 support, Hardware acceleration recommended
 
